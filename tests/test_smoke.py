@@ -82,8 +82,9 @@ object Main {
     "swift": 'print("Hello, World!")',
     "racket": '#lang racket\n(displayln "Hello, World!")',
     "lean": '#eval IO.println "Hello, World!"',
+    # SandboxFusion verilog runner uses iverilog -s tb → top module must be named tb
     "verilog": r"""
-module hello;
+module tb;
   initial begin
     $display("Hello, World!");
     $finish;
@@ -96,9 +97,10 @@ def test_hello():
     print("Hello, World!")
     assert True
 """,
+    # JUnit 5 (junit-platform-console-standalone in SandboxFusion)
     "junit": r"""
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 public class MainTest {
     @Test
     public void testHello() {
@@ -107,7 +109,9 @@ public class MainTest {
     }
 }
 """,
+    # Jest: use @jest/globals for compatibility with runtime/node setup
     "jest": """
+import { test, expect } from '@jest/globals';
 test('hello', () => {
   console.log("Hello, World!");
   expect(true).toBe(true);
