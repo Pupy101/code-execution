@@ -40,6 +40,15 @@ services:
       retries: 3
       start_period: 15s
 
+  worker2:
+    extends: worker
+
+  worker3:
+    extends: worker
+
+  worker4:
+    extends: worker
+
   redis:
     image: redis:7-alpine
     healthcheck:
@@ -55,6 +64,7 @@ services:
     privileged: true
     ports:
       - "9090:8080"
+    mem_limit: 4g
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s

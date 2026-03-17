@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", env_file=".env")
 
     MAX_TIMEOUT: int = 300
-    MAX_MEMORY: int = 1024
+    MAX_MEMORY: int = 2048
     MAX_CPU: float = 4.0
     SANDBOX_FUSION_URL: str = "http://sandbox-fusion:8080"
     ENVIRONMENTS_DIR: str = "config/environments"
