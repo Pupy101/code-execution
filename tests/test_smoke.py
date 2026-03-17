@@ -122,6 +122,12 @@ test('hello', () => {
 # Языки, требующие GPU — пропускаем в стандартном smoke-тесте.
 GPU_LANGUAGES = {"cuda", "python_gpu"}
 
+# Языки для пропуска (через env SKIP_SMOKE_LANGUAGES, через запятую).
+# Полезно для сред, где часть рантаймов падает (OOM, pthread, и т.д.).
+SKIP_LANGUAGES: set[str] = set(
+    filter(None, (s.strip() for s in os.getenv("SKIP_SMOKE_LANGUAGES", "").split(",")))
+)
+
 
 def _execute(lang: str, code: str) -> dict:
     """Отправляет код на исполнение и возвращает JSON-ответ."""
@@ -153,8 +159,8 @@ def test_health():
 
 
 def _smoke_languages():
-    """Языки для smoke-теста: исключаем только GPU."""
-    return sorted(HELLO_WORLD.keys() - GPU_LANGUAGES)
+    """Языки для smoke-теста: исключаем GPU и SKIP_LANGUAGES."""
+    return sorted(HELLO_WORLD.keys() - GPU_LANGUAGES - SKIP_LANGUAGES)
 
 
 @pytest.mark.parametrize("lang", _smoke_languages())
