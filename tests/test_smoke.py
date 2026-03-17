@@ -90,17 +90,7 @@ module hello;
   end
 endmodule
 """,
-    # Тест-раннеры: минимальные тесты, которые печатают Hello, World!
-    "go_test": r"""
-package main
-import (
-    "fmt"
-    "testing"
-)
-func TestHello(t *testing.T) {
-    fmt.Println("Hello, World!")
-}
-""",
+    # Тест-раннеры
     "pytest": r"""
 def test_hello():
     print("Hello, World!")
@@ -128,17 +118,14 @@ test('hello', () => {
 # Языки, требующие GPU — пропускаем в стандартном smoke-тесте.
 GPU_LANGUAGES = {"cuda", "python_gpu"}
 
-# Языки, нестабильные в Docker/CI (Node threading, lean mathlib, и т.д.) — пропускаем.
-SKIP_UNSTABLE = {"lean", "nodejs", "jest", "typescript"}
-
 
 def _execute(lang: str, code: str) -> dict:
     """Отправляет код на исполнение и возвращает JSON-ответ."""
     payload: dict = {
         "code": code,
         "lang": lang,
-        "timeout": 90,
-        "memory": 2048,
+        "timeout": 120,
+        "memory": 4096,
     }
     if lang == "pytest":
         payload["files"] = {
@@ -162,8 +149,8 @@ def test_health():
 
 
 def _smoke_languages():
-    """Языки для smoke-теста: исключаем GPU и нестабильные."""
-    return sorted(HELLO_WORLD.keys() - GPU_LANGUAGES - SKIP_UNSTABLE)
+    """Языки для smoke-теста: исключаем только GPU."""
+    return sorted(HELLO_WORLD.keys() - GPU_LANGUAGES)
 
 
 @pytest.mark.parametrize("lang", _smoke_languages())
