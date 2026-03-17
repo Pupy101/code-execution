@@ -1,0 +1,4 @@
+[submodule "sandbox-fusion"]
+	path = sandbox-fusion
+	url = https://github.com/Pupy101/SandboxFusion.git
+	branch = feature/jupyters-and-custom-images
