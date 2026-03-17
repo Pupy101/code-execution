@@ -31,6 +31,7 @@ def run_execute_task(
         payload: dict[str, Any] = {
             "code": code,
             "language": lang,
+            "compile_timeout": timeout_eff,
             "run_timeout": timeout_eff,
             "memory_limit_MB": memory_eff,
             "files": files_decoded,

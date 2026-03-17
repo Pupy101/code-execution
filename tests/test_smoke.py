@@ -8,8 +8,9 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 EXECUTE_URL = f"{BASE_URL}/api/v1/execute"
 RUN_DEPLOYED_SMOKE = os.getenv("RUN_DEPLOYED_SMOKE", "").lower() in {"1", "true", "yes"}
 
-# Таймаут на один запрос (секунды).  Компилируемые языки могут быть медленнее.
-REQUEST_TIMEOUT = 120
+# Таймаут на один HTTP-запрос (секунды).
+# Должен быть больше, чем server-side HTTP timeout = min(test_timeout + 60, 330) = 180s.
+REQUEST_TIMEOUT = 200
 
 # Ожидаемая подстрока в stdout для каждого кейса.
 EXPECTED = "Hello, World!"
