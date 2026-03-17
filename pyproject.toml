@@ -1,0 +1,40 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = ["sandbox-fusion"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pylint.main]
+ignore = ["sandbox-fusion"]
+jobs = 0
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint."messages control"]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "import-error",
+    "too-many-arguments",
+    "too-many-positional-arguments",
+    "too-many-locals",
+    "duplicate-code",
+]
+
+[tool.mypy]
+python_version = "3.11"
+exclude = ["sandbox-fusion"]
+ignore_missing_imports = true
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true

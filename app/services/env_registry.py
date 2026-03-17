@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -14,11 +14,11 @@ def _env_path(env_id: str) -> Path:
     return _env_dir() / f"{env_id}.yaml"
 
 
-def get_env_image(env_id: str) -> Optional[str]:
+def get_env_image(env_id: str) -> str | None:
     path = _env_path(env_id)
     if not path.exists():
         return None
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return (data or {}).get("image")
 
@@ -30,7 +30,7 @@ def list_environments() -> list[dict[str, Any]]:
         return result
     for p in d.glob("*.yaml"):
         env_id = p.stem
-        with open(p) as f:
+        with open(p, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         result.append(
             {
@@ -48,22 +48,22 @@ def register_environment(env_id: str, image: str, lang: str = "", desc: str = ""
     d.mkdir(parents=True, exist_ok=True)
     path = _env_path(env_id)
     data = {"id": env_id, "image": image, "lang": lang, "desc": desc}
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
     return {"id": env_id, "image": image, "status": "registered"}
 
 
-def update_environment(env_id: str, image: Optional[str] = None, desc: Optional[str] = None) -> Optional[dict[str, Any]]:
+def update_environment(env_id: str, image: str | None = None, desc: str | None = None) -> dict[str, Any] | None:
     path = _env_path(env_id)
     if not path.exists():
         return None
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
     if image is not None:
         data["image"] = image
     if desc is not None:
         data["desc"] = desc
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
     return {"id": env_id, "image": data.get("image", ""), "status": "updated"}
 

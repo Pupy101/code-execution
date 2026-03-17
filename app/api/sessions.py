@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -15,7 +15,7 @@ SANDBOX_URL = settings.SANDBOX_FUSION_URL.rstrip("/")
 
 class SessionCreateRequest(BaseModel):
     ttl: int = Field(1800, description="Seconds of inactivity before auto-finish")
-    env: Optional[str] = Field(None, description="Environment ID from registry")
+    env: str | None = Field(None, description="Environment ID from registry")
     memory: int = Field(512, description="Memory limit MB")
     cpu: float = Field(1.0, description="CPU limit")
 
@@ -31,7 +31,7 @@ class SessionFilesRequest(BaseModel):
 @router.post("/sessions")
 async def session_create(req: SessionCreateRequest):
     image = get_env_image(req.env) if req.env else None
-    payload = {"ttl": req.ttl, "memory": req.memory, "cpu": req.cpu}
+    payload: dict[str, Any] = {"ttl": req.ttl, "memory": req.memory, "cpu": req.cpu}
     if image:
         payload["image"] = image
     async with httpx.AsyncClient(timeout=10.0) as client:

@@ -1,9 +1,10 @@
 import time
 from typing import Any
 
+import httpx
+
 from app.config import settings
 from app.services.env_registry import get_env_image
-from app.services.sandbox_fusion import SandboxFusionClient
 
 
 def run_execute_task(
@@ -25,9 +26,7 @@ def run_execute_task(
     timeout_eff = min(timeout, settings.MAX_TIMEOUT)
     memory_eff = min(memory, settings.MAX_MEMORY)
     image = get_env_image(env_id) if env_id else None
-    files_decoded: dict[str, str | None] = {k: v for k, v in files.items()}
-    import httpx
-
+    files_decoded: dict[str, str | None] = dict(files.items())
     with httpx.Client(timeout=timeout_eff + 30) as http_client:
         payload: dict[str, Any] = {
             "code": code,

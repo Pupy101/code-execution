@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -14,7 +14,7 @@ class SandboxFusionClient:
             try:
                 r = await client.get(f"{self.base_url}/health")
                 return r.status_code == 200
-            except Exception:
+            except httpx.HTTPError:
                 return False
 
     async def run_code(
@@ -25,10 +25,10 @@ class SandboxFusionClient:
         compile_timeout: float = 10,
         run_timeout: float = 10,
         memory_limit_MB: int = -1,
-        stdin: Optional[str] = None,
-        files: dict[str, Optional[str]] | None = None,
+        stdin: str | None = None,
+        files: dict[str, str | None] | None = None,
         fetch_files: list[str] | None = None,
-        image: Optional[str] = None,
+        image: str | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "code": code,
@@ -46,7 +46,8 @@ class SandboxFusionClient:
         async with httpx.AsyncClient(timeout=run_timeout + 30) as client:
             r = await client.post(f"{self.base_url}/run_code", json=payload)
             r.raise_for_status()
-            return r.json()
+            result: dict[str, Any] = r.json()
+            return result
 
 
 sandbox_client = SandboxFusionClient()

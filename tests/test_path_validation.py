@@ -1,5 +1,3 @@
-import pytest
-
 from app.utils.path_validation import validate_file_path, validate_paths
 
 

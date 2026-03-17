@@ -122,7 +122,7 @@ async def get_execute_async_status(job_id: str) -> ExecuteAsyncStatusResponse:
     try:
         job = Job.fetch(job_id, connection=get_redis())
     except Exception:
-        raise HTTPException(status_code=404, detail={"error": "validation_error", "message": "Job not found"})
+        raise HTTPException(status_code=404, detail={"error": "validation_error", "message": "Job not found"}) from None
     if job.is_queued or job.is_started:
         return ExecuteAsyncStatusResponse(status="pending", stdout="", stderr="", exit_code=0)
     if job.is_failed:

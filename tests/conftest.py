@@ -10,5 +10,6 @@ os.environ.setdefault("ENVIRONMENTS_DIR", "config/environments")
 
 @pytest.fixture
 def client():
-    from app.main import app
+    from app.main import app  # pylint: disable=import-outside-toplevel
+
     return TestClient(app)

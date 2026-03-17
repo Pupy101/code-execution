@@ -8,7 +8,7 @@ from app.api.sessions import router as sessions_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     yield
 
 

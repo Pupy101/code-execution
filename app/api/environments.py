@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -21,8 +19,8 @@ class EnvRegisterRequest(BaseModel):
 
 
 class EnvUpdateRequest(BaseModel):
-    image: Optional[str] = Field(None, description="Docker image")
-    desc: Optional[str] = Field(None, description="Description")
+    image: str | None = Field(None, description="Docker image")
+    desc: str | None = Field(None, description="Description")
 
 
 @router.post("/environments")

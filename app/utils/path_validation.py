@@ -1,8 +1,7 @@
 import re
-from typing import Optional
 
 
-def validate_file_path(path: str, max_len: int = 256) -> Optional[str]:
+def validate_file_path(path: str, max_len: int = 256) -> str | None:
     if ".." in path:
         return "path_traversal"
     if len(path) > max_len:
@@ -12,7 +11,7 @@ def validate_file_path(path: str, max_len: int = 256) -> Optional[str]:
     return None
 
 
-def validate_paths(files: dict[str, str]) -> Optional[str]:
+def validate_paths(files: dict[str, str]) -> str | None:
     for path in files:
         err = validate_file_path(path)
         if err:
