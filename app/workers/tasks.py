@@ -46,15 +46,23 @@ def run_execute_task(
         data = r.json()
     status_map = {"Success": "success", "Failed": "error", "SandboxError": "error"}
     run = data.get("run_result") or {}
-    if run.get("status") == "TimeLimitExceeded":
+    compile = data.get("compile_result") or {}
+    if run.get("status") == "TimeLimitExceeded" or compile.get("status") == "TimeLimitExceeded":
         status = "timeout"
     elif run.get("status") == "Error":
         status = "error"
     else:
         status = status_map.get(data.get("status", ""), "error")
+    # When there is no run step (compile failed), surface compile stderr for debugging.
+    stdout = run.get("stdout") or ""
+    stderr = run.get("stderr") or ""
+    exit_code = run.get("return_code", 0) or 0
+    if not run and compile:
+        stderr = compile.get("stderr") or stderr
+        exit_code = compile.get("return_code") or exit_code
     return {
         "status": status,
-        "stdout": run.get("stdout") or "",
-        "stderr": run.get("stderr") or "",
-        "exit_code": run.get("return_code", 0) or 0,
+        "stdout": stdout,
+        "stderr": stderr,
+        "exit_code": exit_code,
     }
