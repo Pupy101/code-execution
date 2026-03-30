@@ -1,26 +1,24 @@
-from collections.abc import Callable
+import json
 from typing import Any
 
 import redis
-from rq import Queue
 
 from app.config import settings
 
+_JOB_PREFIX = "job:"
+
 
 def get_redis() -> redis.Redis:
-    return redis.Redis.from_url(settings.REDIS_URL, decode_responses=False)
+    return redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
-def get_queue() -> Queue:
-    return Queue(connection=get_redis(), default_timeout=settings.TASK_TTL)
+def job_set(job_id: str, data: dict[str, Any]) -> None:
+    get_redis().setex(f"{_JOB_PREFIX}{job_id}", settings.TASK_TTL, json.dumps(data))
 
 
-def get_queue_len() -> int:
-    q = get_queue()
-    return len(q)
-
-
-def enqueue(job_func: Callable[..., Any], *args: Any, **kwargs: Any) -> str:
-    q = get_queue()
-    job = q.enqueue(job_func, *args, **kwargs, job_timeout=settings.TASK_TTL)
-    return job.id if job else ""
+def job_get(job_id: str) -> dict[str, Any] | None:
+    raw = get_redis().get(f"{_JOB_PREFIX}{job_id}")
+    if raw is None:
+        return None
+    result: dict[str, Any] = json.loads(raw)
+    return result

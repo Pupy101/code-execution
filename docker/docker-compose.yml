@@ -20,34 +20,6 @@ services:
       retries: 3
       start_period: 10s
 
-  worker:
-    build:
-      context: ..
-      dockerfile: Dockerfile
-    command: rq worker -u redis://redis:6379/0
-    environment:
-      REDIS_URL: redis://redis:6379/0
-      SANDBOX_FUSION_URL: http://sandbox-fusion:8080
-    depends_on:
-      redis:
-        condition: service_healthy
-      sandbox-fusion:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "rq info -u redis://redis:6379/0 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-
-  worker2:
-    extends: worker
-
-  worker3:
-    extends: worker
-
-  worker4:
-    extends: worker
 
   redis:
     image: redis:7-alpine

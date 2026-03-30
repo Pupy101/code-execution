@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 
 def test_health(client):
@@ -15,24 +15,51 @@ def test_execute_validation(client):
     assert r.status_code == 400
 
 
-@patch("app.api.execute.get_queue_len")
-@patch("app.api.execute.enqueue")
-def test_execute_async(mock_enqueue, mock_len, client):
-    mock_len.return_value = 0
-    mock_enqueue.return_value = "job-123"
+@patch("app.api.execute.job_set")
+@patch("app.api.execute.asyncio.create_task")
+@patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
+def test_execute_async(mock_run, _mock_task, mock_job_set, client):
+    mock_run.return_value = {"status": "Success", "run_result": {"stdout": "1\n", "stderr": "", "return_code": 0}}
     r = client.post(
         "/api/v1/execute/async",
         json={"code": "print(1)", "lang": "python"},
     )
     assert r.status_code == 200
-    assert r.json()["id"] == "job-123"
+    job_id = r.json()["id"]
+    assert job_id  # UUID присвоен
+    mock_job_set.assert_called_once()
+    assert mock_job_set.call_args[0][0] == job_id
 
 
-@patch("app.api.execute.get_queue_len")
-def test_execute_async_queue_full(mock_len, client):
-    mock_len.return_value = 500
+@patch("app.api.execute._sandbox_sem")
+def test_execute_async_overloaded(mock_sem, client):
+    mock_sem.locked.return_value = True
     r = client.post(
         "/api/v1/execute/async",
         json={"code": "print(1)", "lang": "python"},
     )
     assert r.status_code == 503
+
+
+@patch("app.api.execute.job_get")
+def test_execute_async_status_not_found(mock_get, client):
+    mock_get.return_value = None
+    r = client.get("/api/v1/execute/async/nonexistent-id")
+    assert r.status_code == 404
+
+
+@patch("app.api.execute.job_get")
+def test_execute_async_status_pending(mock_get, client):
+    mock_get.return_value = {"status": "pending", "stdout": "", "stderr": "", "exit_code": 0}
+    r = client.get("/api/v1/execute/async/some-id")
+    assert r.status_code == 200
+    assert r.json()["status"] == "pending"
+
+
+@patch("app.api.execute.job_get")
+def test_execute_async_status_finish(mock_get, client):
+    mock_get.return_value = {"status": "finish", "stdout": "hello\n", "stderr": "", "exit_code": 0}
+    r = client.get("/api/v1/execute/async/some-id")
+    assert r.status_code == 200
+    assert r.json()["status"] == "finish"
+    assert r.json()["stdout"] == "hello\n"
