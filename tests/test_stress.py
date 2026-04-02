@@ -1,14 +1,3 @@
-"""
-Stress test: concurrent real-code execution across top-5 languages.
-
-Targets a LIVE service (not TestClient). Set BASE_URL env var to override.
-Default: http://localhost:8000
-
-Run:
-    pytest tests/test_stress.py -v -s
-    CONCURRENCY=20 pytest tests/test_stress.py -v -s
-"""
-
 import asyncio
 import os
 import statistics
@@ -21,12 +10,7 @@ import pytest
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 CONCURRENCY = int(os.environ.get("CONCURRENCY", "10"))
 TIMEOUT = int(os.environ.get("EXEC_TIMEOUT", "30"))
-# Sandbox runtime (conda/helpers) needs enough headroom; 256 MB often yields empty error (e.g. exit -5).
 MEMORY_MB = int(os.environ.get("EXEC_MEMORY", "1024"))
-
-# ---------------------------------------------------------------------------
-# Real workloads per language
-# ---------------------------------------------------------------------------
 
 PAYLOADS: dict[str, dict] = {
     "python": {
@@ -201,8 +185,8 @@ func main() {
 """,
         "expected_substr": "OK: sorted 500 numbers",
     },
-    "nodejs": {
-        "lang": "nodejs",
+    "javascript": {
+        "lang": "javascript",
         "code": """\
 function matMul(A, B, n) {
     const C = Array.from({length: n}, () => new Array(n).fill(0));
@@ -241,9 +225,6 @@ console.log(`OK: matmul ${n}x${n} identity check=${ok}, fib(50)=${f50}`);
     },
 }
 
-# ---------------------------------------------------------------------------
-# Data classes
-# ---------------------------------------------------------------------------
 
 @dataclass
 class Result:
@@ -284,10 +265,6 @@ class LangReport:
         return statistics.mean(self.latencies) if self.latencies else 0
 
 
-# ---------------------------------------------------------------------------
-# HTTP helpers
-# ---------------------------------------------------------------------------
-
 async def execute_once(client: httpx.AsyncClient, payload: dict, expected: str) -> Result:
     lang = payload["lang"]
     t0 = time.perf_counter()
@@ -304,20 +281,20 @@ async def execute_once(client: httpx.AsyncClient, payload: dict, expected: str) 
         )
         elapsed = time.perf_counter() - t0
         if resp.status_code != 200:
-            return Result(lang=lang, elapsed=elapsed, status="http_error",
-                          error=f"HTTP {resp.status_code}: {resp.text[:200]}")
+            return Result(
+                lang=lang, elapsed=elapsed, status="http_error", error=f"HTTP {resp.status_code}: {resp.text[:200]}"
+            )
         data = resp.json()
         status = data.get("status", "error")
         stdout = data.get("stdout", "")
         stderr = data.get("stderr", "")
         if status == "success" and expected not in stdout:
             status = "wrong_output"
-        return Result(lang=lang, elapsed=elapsed, status=status,
-                      stdout=stdout, stderr=stderr,
-                      exit_code=data.get("exit_code", 0))
-    except (httpx.HTTPError, OSError, asyncio.TimeoutError) as exc:
-        return Result(lang=lang, elapsed=time.perf_counter() - t0,
-                      status="exception", error=str(exc))
+        return Result(
+            lang=lang, elapsed=elapsed, status=status, stdout=stdout, stderr=stderr, exit_code=data.get("exit_code", 0)
+        )
+    except (TimeoutError, httpx.HTTPError, OSError) as exc:
+        return Result(lang=lang, elapsed=time.perf_counter() - t0, status="exception", error=str(exc))
 
 
 async def run_concurrent(lang: str, payload: dict, concurrency: int) -> LangReport:
@@ -338,25 +315,20 @@ async def run_concurrent(lang: str, payload: dict, concurrency: int) -> LangRepo
             report.success += 1
             report.latencies.append(r.elapsed)
         else:
-            print(f"  [FAIL] {lang}: status={r.status} stdout={r.stdout[:80]!r} "
-                  f"stderr={r.stderr[:120]!r} err={r.error!r}")
+            print(
+                f"  [FAIL] {lang}: status={r.status} stdout={r.stdout[:80]!r} stderr={r.stderr[:120]!r} err={r.error!r}"
+            )
     return report
 
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("lang", list(PAYLOADS.keys()))
 async def test_single_execution(lang: str):
-    """Each language executes once and produces correct output."""
     payload = PAYLOADS[lang]
     async with httpx.AsyncClient() as client:
         result = await execute_once(client, payload, payload["expected_substr"])
 
-    print(f"\n[{lang}] status={result.status} elapsed={result.elapsed:.2f}s "
-          f"stdout={result.stdout[:100]!r}")
+    print(f"\n[{lang}] status={result.status} elapsed={result.elapsed:.2f}s stdout={result.stdout[:100]!r}")
 
     assert result.status == "success", (
         f"{lang}: expected success, got {result.status!r}\n"
@@ -368,41 +340,36 @@ async def test_single_execution(lang: str):
 
 @pytest.mark.asyncio
 async def test_stress_all_languages():
-    """
-    Sends CONCURRENCY concurrent requests per language, then prints a summary table.
-    Asserts >= 80% success rate per language and p95 < timeout.
-    """
-    print(f"\n{'='*65}")
+    print(f"\n{'=' * 65}")
     print(f"  STRESS TEST  |  {CONCURRENCY} concurrent requests per language")
     print(f"  BASE_URL: {BASE_URL}")
-    print(f"{'='*65}\n")
+    print(f"{'=' * 65}\n")
 
     reports: list[LangReport] = []
-    for lang, payload in PAYLOADS.items():
+    for lang, payload in sorted(PAYLOADS.items()):
         print(f"Running {CONCURRENCY}x {lang} ...", flush=True)
         t_start = time.perf_counter()
         report = await run_concurrent(lang, payload, CONCURRENCY)
         wall = time.perf_counter() - t_start
-        print(f"  done in {wall:.1f}s | success={report.success}/{report.total} "
-              f"mean={report.mean:.2f}s p95={report.p95:.2f}s")
+        print(
+            f"  done in {wall:.1f}s | success={report.success}/{report.total} "
+            f"mean={report.mean:.2f}s p95={report.p95:.2f}s"
+        )
         reports.append(report)
 
-    # --- Summary table ---
-    print(f"\n{'─'*65}")
+    print(f"\n{'─' * 65}")
     print(f"{'Language':<14} {'Total':>6} {'OK':>5} {'Rate':>7} {'Mean':>8} {'P50':>8} {'P95':>8}")
-    print(f"{'─'*65}")
+    print(f"{'─' * 65}")
     for r in reports:
-        print(f"{r.lang:<14} {r.total:>6} {r.success:>5} {r.success_rate:>6.1f}% "
-              f"{r.mean:>7.2f}s {r.p50:>7.2f}s {r.p95:>7.2f}s")
-    print(f"{'─'*65}\n")
+        print(
+            f"{r.lang:<14} {r.total:>6} {r.success:>5} {r.success_rate:>6.1f}% "
+            f"{r.mean:>7.2f}s {r.p50:>7.2f}s {r.p95:>7.2f}s"
+        )
+    print(f"{'─' * 65}\n")
 
-    # --- Assertions ---
     for r in reports:
         assert r.success_rate >= 80, (
-            f"{r.lang}: success rate {r.success_rate:.1f}% < 80% "
-            f"({r.success}/{r.total} succeeded)"
+            f"{r.lang}: success rate {r.success_rate:.1f}% < 80% ({r.success}/{r.total} succeeded)"
         )
         if r.latencies:
-            assert r.p95 < TIMEOUT, (
-                f"{r.lang}: p95 latency {r.p95:.2f}s >= timeout {TIMEOUT}s"
-            )
+            assert r.p95 < TIMEOUT, f"{r.lang}: p95 latency {r.p95:.2f}s >= timeout {TIMEOUT}s"

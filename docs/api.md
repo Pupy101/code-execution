@@ -6,28 +6,51 @@
 GET /health
 ```
 
-Response: `200 OK`, body: `{"status": "ok"}`
+```json
+{"status": "ok"}
+```
 
-## Execute (Sync)
+---
 
-Поддерживаемые языки (`lang`) совпадают с `sandbox.runners.types.Language`: `python`, `cpp`, `nodejs`, `js`, `go`, `go_test`, `java`, `php`, `csharp`, `bash`, `typescript`, `ts`, `sql`, `rust`, `cuda`, `lua`, `R`, `perl`, `D_ut`, `ruby`, `scala`, `julia`, `pytest`, `junit`, `kotlin_script`, `jest`, `verilog`, `python_gpu`, `lean`, `swift`, `racket`. Отдельно в SandboxFusion доступен `POST /run_jupyter` (не через поле `lang`).
+## Languages
 
 ```
-POST /api/v1/execute
-Content-Type: application/json
+GET /languages
+```
 
+Возвращает список поддерживаемых языков. Значение поля `id` используется как `lang` в запросах на выполнение.
+
+```json
 {
-  "code": "print(1+1)",
-  "lang": "python",
-  "timeout": 30,
-  "memory": 256,
-  "cpu": 1.0,
-  "network": false,
-  "files": {}
+  "languages": [
+    {"id": "python", "title": "Python", "description": "..."},
+    {"id": "javascript", "title": "JavaScript", "description": "..."}
+  ]
 }
 ```
 
-Response:
+---
+
+## Execute (sync)
+
+```
+POST /api/v1/execute
+```
+
+**Тело запроса:**
+
+| Поле | Тип | Default | Описание |
+|---|---|---|---|
+| `code` | string | — | Код для запуска |
+| `lang` | string | — | Язык из `GET /languages` |
+| `timeout` | int | 30 | Макс. время выполнения (сек) |
+| `memory` | int | 256 | Макс. память (МБ) |
+| `cpu` | float | 1.0 | Макс. CPU |
+| `network` | bool | false | Доступ к сети (не передаётся в sandbox) |
+| `files` | object | `{}` | Файлы `{"path": "содержимое"}` |
+
+**Ответ:**
+
 ```json
 {
   "status": "success",
@@ -37,56 +60,94 @@ Response:
 }
 ```
 
-Status: `success` | `timeout` | `error` | `memory_limit`
+Возможные значения `status`: `success`, `error`, `timeout`.
 
-При переполнении параллельных запусков: `503`, body: `{"error": "overloaded", "message": "Too many concurrent executions"}`
+---
 
-## Execute (Async)
+## Execute (async)
+
+**Создать задачу:**
 
 ```
 POST /api/v1/execute/async
 Body: (то же что sync)
-Response: {"id": "uuid"}
+```
 
+```json
+{"id": "uuid"}
+```
+
+**Получить результат:**
+
+```
 GET /api/v1/execute/async/{id}
-Response: {
-  "status": "pending" | "timeout" | "finish",
-  "stdout": "...",
-  "stderr": "...",
+```
+
+```json
+{
+  "status": "pending",
+  "stdout": "",
+  "stderr": "",
   "exit_code": 0
 }
 ```
 
-## Sessions (Python)
+Возможные значения `status`: `pending`, `finish`, `error`, `timeout`.
+
+---
+
+## Sessions
+
+Stateful-сессия с сохранением состояния между вызовами (Python).
+
+**Создать сессию:**
 
 ```
 POST /api/v1/sessions
 Body: {"ttl": 1800, "memory": 512, "cpu": 1.0}
-Response: {"id": "uuid"}
-
-POST /api/v1/sessions/{id}/execute
-Body: {"code": "x = 1"}
-Response: {"status": "success", "stdout": "", "stderr": ""}
-
-POST /api/v1/sessions/{id}/files
-Body: {"files": {"data.csv": "base64...", "utils/helper.py": "base64..."}}
-Response: {"uploaded": ["data.csv", "utils/helper.py"]}
-
-GET /api/v1/sessions/{id}/files
-Response: {"files": ["data.csv", "utils/helper.py"]}
-
-POST /api/v1/sessions/{id}/finish
-Response: {"status": "finished"}
 ```
 
-## Формат ошибок
+**Выполнить код:**
+
+```
+POST /api/v1/sessions/{id}/execute
+Body: {"code": "x = 1"}
+```
+
+**Загрузить файлы:**
+
+```
+POST /api/v1/sessions/{id}/files
+Body: {"files": {"data.csv": "...", "utils/helper.py": "..."}}
+```
+
+**Список файлов:**
+
+```
+GET /api/v1/sessions/{id}/files
+```
+
+**Завершить сессию:**
+
+```
+POST /api/v1/sessions/{id}/finish
+```
+
+---
+
+## Ошибки
+
+| HTTP | `error` | Причина |
+|---|---|---|
+| 400 | `path_traversal` | Недопустимый путь в `files` |
+| 404 | `not_found` | Async-задача не найдена |
+| 404 | `invalid_env` | Сессия не найдена |
+| 503 | `overloaded` | Превышен лимит одновременных запросов |
+| 502 | `sandbox_error` | Ошибка на стороне SandboxFusion |
 
 ```json
 {
-  "error": "queue_full",
-  "message": "Очередь переполнена",
-  "details": {"queue_len": 500, "max": 500}
+  "error": "overloaded",
+  "message": "Too many concurrent executions"
 }
 ```
-
-Коды: `queue_full`, `queue_timeout`, `task_timeout`, `invalid_env`, `path_traversal`, `validation_error`

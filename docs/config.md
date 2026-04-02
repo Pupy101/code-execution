@@ -1,21 +1,25 @@
-# Configuration
+# Конфигурация
 
-## Переменные окружения
+Настраивается через переменные окружения или файл `.env` в корне репозитория.
 
-| Переменная | Описание | Default |
-|------------|----------|---------|
-| MAX_TIMEOUT | Макс. timeout исполнения (сек) | 300 |
-| MAX_MEMORY | Макс. память (MB) | 1024 |
-| MAX_CPU | Макс. CPU | 4 |
-| SANDBOX_FUSION_URL | URL SandboxFusion | http://sandbox-fusion:8080 |
-| WORKER_COUNT | Зарезервировано (RQ не используется в текущей реализации) | 4 |
-| MAX_QUEUE_SIZE | Макс. размер очереди | 500 |
-| QUEUE_TIMEOUT | Таймаут ожидания в очереди (сек) | 1800 |
-| TASK_TTL | TTL задачи (сек) | 1800 |
-| REDIS_URL | URL Redis | redis://localhost:6379/0 |
+## Переменные
 
-## Лимиты
+| Переменная | Default | Описание |
+|---|---|---|
+| `SANDBOX_FUSION_URL` | `http://sandbox-fusion:8080` | URL SandboxFusion |
+| `REDIS_URL` | `redis://localhost:6379/0` | URL Redis |
+| `MAX_TIMEOUT` | `300` | Макс. время выполнения (сек) |
+| `MAX_MEMORY` | `4096` | Макс. память (МБ) |
+| `MAX_CPU` | `4.0` | Макс. CPU |
+| `MAX_QUEUE_SIZE` | `500` | Макс. число одновременных запросов к sandbox |
+| `TASK_TTL` | `1800` | Время хранения результата async-задачи в памяти (сек) |
 
-- `effective = min(user_value, MAX_*)` для timeout, memory, cpu
-- При `queue_len >= MAX_QUEUE_SIZE` — 503
-- Задача в очереди дольше QUEUE_TIMEOUT — queue_timeout
+## Лимиты запросов
+
+Значения `timeout`, `memory`, `cpu` из запроса клиента урезаются до соответствующего `MAX_*`:
+
+```
+effective = min(user_value, MAX_*)
+```
+
+При превышении `MAX_QUEUE_SIZE` одновременных запросов возвращается `503 overloaded`.

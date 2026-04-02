@@ -7,6 +7,38 @@ def test_health(client):
     assert r.json() == {"status": "ok"}
 
 
+def test_languages(client):
+    r = client.get("/languages")
+    assert r.status_code == 200
+    data = r.json()
+    assert "languages" in data
+    assert len(data["languages"]) == 26
+    ids = {x["id"] for x in data["languages"]}
+    assert "javascript" in ids
+    assert "nodejs" not in ids
+    assert all("title" in x and "description" in x for x in data["languages"])
+
+
+def test_execute_rejects_non_public_lang(client):
+    r = client.post(
+        "/api/v1/execute",
+        json={"code": "1", "lang": "go_test"},
+    )
+    assert r.status_code == 422
+
+
+@patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
+def test_execute_maps_markdown_javascript_to_nodejs(mock_run, client):
+    mock_run.return_value = {"status": "Success", "run_result": {"stdout": "", "stderr": "", "return_code": 0}}
+    r = client.post(
+        "/api/v1/execute",
+        json={"code": 'console.log("hi")', "lang": "javascript"},
+    )
+    assert r.status_code == 200
+    mock_run.assert_awaited_once()
+    assert mock_run.call_args.kwargs["language"] == "nodejs"
+
+
 def test_execute_validation(client):
     r = client.post(
         "/api/v1/execute",
@@ -31,7 +63,7 @@ def test_execute_async(mock_run, mock_create_task, mock_job_set, client):
     )
     assert r.status_code == 200
     job_id = r.json()["id"]
-    assert job_id  # UUID присвоен
+    assert job_id
     mock_job_set.assert_called_once()
     assert mock_job_set.call_args[0][0] == job_id
 

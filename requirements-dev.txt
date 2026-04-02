@@ -3,3 +3,4 @@ ruff
 pylint
 mypy
 pytest
+pytest-asyncio

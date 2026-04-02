@@ -1,4 +1,3 @@
-import base64
 import os
 
 import httpx
@@ -8,18 +7,13 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 EXECUTE_URL = f"{BASE_URL}/api/v1/execute"
 RUN_DEPLOYED_SMOKE = os.getenv("RUN_DEPLOYED_SMOKE", "").lower() in {"1", "true", "yes"}
 
-# Таймаут на один HTTP-запрос (секунды).
-# Должен быть больше, чем server-side HTTP timeout = min(test_timeout + 60, 330) = 180s.
 REQUEST_TIMEOUT = 200
 
-# Ожидаемая подстрока в stdout для каждого кейса.
 EXPECTED = "Hello, World!"
 pytestmark = pytest.mark.skipif(
     not RUN_DEPLOYED_SMOKE,
     reason="set RUN_DEPLOYED_SMOKE=1 to run deployed smoke tests",
 )
-
-# ---------- Hello-World код для каждого языка ----------
 
 HELLO_WORLD: dict[str, str] = {
     "python": 'print("Hello, World!")',
@@ -30,7 +24,7 @@ int main() {
     return 0;
 }
 """,
-    "nodejs": 'console.log("Hello, World!");',
+    "javascript": 'console.log("Hello, World!");',
     "go": r"""
 package main
 import "fmt"
@@ -62,9 +56,9 @@ fn main() {
 }
 """,
     "lua": 'print("Hello, World!")',
-    "R": 'cat("Hello, World!\\n")',
+    "r": 'cat("Hello, World!\\n")',
     "perl": 'print "Hello, World!\\n";',
-    "D_ut": r"""
+    "d": r"""
 import std.stdio;
 void main() {
     writeln("Hello, World!");
@@ -79,11 +73,10 @@ object Main {
 }
 """,
     "julia": 'println("Hello, World!")',
-    "kotlin_script": 'println("Hello, World!")',
+    "kotlin": 'println("Hello, World!")',
     "swift": 'print("Hello, World!")',
     "racket": '#lang racket\n(displayln "Hello, World!")',
     "lean": '#eval IO.println "Hello, World!"',
-    # SandboxFusion verilog runner uses iverilog -s tb → top module must be named tb
     "verilog": r"""
 module tb;
   initial begin
@@ -92,67 +85,27 @@ module tb;
   end
 endmodule
 """,
-    # Тест-раннеры
-    "pytest": r"""
-def test_hello():
-    print("Hello, World!")
-    assert True
-""",
-    # JUnit 5 (junit-platform-console-standalone in SandboxFusion)
-    "junit": r"""
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-public class MainTest {
-    @Test
-    public void testHello() {
-        System.out.println("Hello, World!");
-        assertTrue(true);
-    }
-}
-""",
-    # Jest: use @jest/globals for compatibility with runtime/node setup
-    "jest": """
-import { test, expect } from '@jest/globals';
-test('hello', () => {
-  console.log("Hello, World!");
-  expect(true).toBe(true);
-});
-""",
 }
 
-# Языки, требующие GPU — пропускаем в стандартном smoke-тесте.
-GPU_LANGUAGES = {"cuda", "python_gpu"}
+GPU_BLOCKLIST: set[str] = set()
 
-# Языки для пропуска (через env SKIP_SMOKE_LANGUAGES, через запятую).
-# Полезно для сред, где часть рантаймов падает (OOM, pthread, и т.д.).
-SKIP_LANGUAGES: set[str] = set(
-    filter(None, (s.strip() for s in os.getenv("SKIP_SMOKE_LANGUAGES", "").split(",")))
-)
+SKIP_LANGUAGES: set[str] = set(filter(None, (s.strip() for s in os.getenv("SKIP_SMOKE_LANGUAGES", "").split(","))))
 
 
 def _execute(lang: str, code: str) -> dict:
-    """Отправляет код на исполнение и возвращает JSON-ответ."""
     payload: dict = {
         "code": code,
         "lang": lang,
         "timeout": 120,
         "memory": 4096,
     }
-    if lang == "pytest":
-        payload["files"] = {
-            "pytest.ini": base64.b64encode(b"[pytest]\naddopts = -s\n").decode(),
-        }
     with httpx.Client(timeout=REQUEST_TIMEOUT) as client:
         resp = client.post(EXECUTE_URL, json=payload)
         resp.raise_for_status()
-        return resp.json()  # type: ignore
-
-
-# -------------------- Тесты --------------------
+        return resp.json()
 
 
 def test_health():
-    """Проверяем что приложение живо."""
     with httpx.Client(timeout=10) as client:
         resp = client.get(f"{BASE_URL}/health")
         assert resp.status_code == 200
@@ -160,13 +113,11 @@ def test_health():
 
 
 def _smoke_languages():
-    """Языки для smoke-теста: исключаем GPU и SKIP_LANGUAGES."""
-    return sorted(HELLO_WORLD.keys() - GPU_LANGUAGES - SKIP_LANGUAGES)
+    return sorted(HELLO_WORLD.keys() - GPU_BLOCKLIST - SKIP_LANGUAGES)
 
 
 @pytest.mark.parametrize("lang", _smoke_languages())
 def test_hello_world(lang: str):
-    """Запускает Hello World для данного языка и проверяет stdout."""
     code = HELLO_WORLD[lang]
     result = _execute(lang, code)
 
@@ -174,9 +125,3 @@ def test_hello_world(lang: str):
         f"[{lang}] status={result['status']}, stderr={result.get('stderr', '')!r}, exit_code={result.get('exit_code')}"
     )
     assert EXPECTED in result["stdout"], f"[{lang}] expected '{EXPECTED}' in stdout, got: {result['stdout']!r}"
-
-
-@pytest.mark.parametrize("lang", sorted(GPU_LANGUAGES))
-def test_gpu_language_skipped(lang: str):
-    """GPU-языки пропускаем — просто помечаем skip."""
-    pytest.skip(f"{lang} requires GPU runtime")

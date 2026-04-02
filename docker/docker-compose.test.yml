@@ -4,7 +4,7 @@
 #   docker compose -f docker/docker-compose.test.yml run --rm test-unit
 #
 # Стек + стресс-тесты к живому API:
-#   docker compose -f docker/docker-compose.test.yml up -d redis sandbox-fusion app
+#   docker compose -f docker/docker-compose.test.yml up -d sandbox-fusion app
 #   docker compose -f docker/docker-compose.test.yml run --rm test-stress
 #
 # Остановка стека:
@@ -16,14 +16,6 @@ services:
       context: ..
       dockerfile: Dockerfile.test
     command: pytest tests/ -v --ignore=tests/test_stress.py
-
-  redis:
-    image: redis:7-alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
 
   sandbox-fusion:
     build:
@@ -45,11 +37,8 @@ services:
       context: ..
       dockerfile: Dockerfile
     environment:
-      REDIS_URL: redis://redis:6379/0
       SANDBOX_FUSION_URL: http://sandbox-fusion:8080
     depends_on:
-      redis:
-        condition: service_healthy
       sandbox-fusion:
         condition: service_healthy
     healthcheck:

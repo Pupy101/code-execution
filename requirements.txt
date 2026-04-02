@@ -1,8 +1,4 @@
 fastapi
 uvicorn[standard]
-redis
-rq
 httpx
 pydantic-settings
-pytest
-pytest-asyncio
