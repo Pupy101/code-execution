@@ -21,6 +21,8 @@ import pytest
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 CONCURRENCY = int(os.environ.get("CONCURRENCY", "10"))
 TIMEOUT = int(os.environ.get("EXEC_TIMEOUT", "30"))
+# Sandbox runtime (conda/helpers) needs enough headroom; 256 MB often yields empty error (e.g. exit -5).
+MEMORY_MB = int(os.environ.get("EXEC_MEMORY", "1024"))
 
 # ---------------------------------------------------------------------------
 # Real workloads per language
@@ -296,7 +298,7 @@ async def execute_once(client: httpx.AsyncClient, payload: dict, expected: str) 
                 "code": payload["code"],
                 "lang": lang,
                 "timeout": TIMEOUT,
-                "memory": 256,
+                "memory": MEMORY_MB,
             },
             timeout=TIMEOUT + 30,
         )

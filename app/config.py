@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     MAX_MEMORY: int = 4096
     MAX_CPU: float = 4.0
     SANDBOX_FUSION_URL: str = "http://sandbox-fusion:8080"
-    ENVIRONMENTS_DIR: str = "config/environments"
 
     WORKER_COUNT: int = 4
     MAX_QUEUE_SIZE: int = 500

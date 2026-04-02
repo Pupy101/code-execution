@@ -1,0 +1,73 @@
+# Тесты в Docker.
+#
+# Только unit (моки, без SandboxFusion):
+#   docker compose -f docker/docker-compose.test.yml run --rm test-unit
+#
+# Стек + стресс-тесты к живому API:
+#   docker compose -f docker/docker-compose.test.yml up -d redis sandbox-fusion app
+#   docker compose -f docker/docker-compose.test.yml run --rm test-stress
+#
+# Остановка стека:
+#   docker compose -f docker/docker-compose.test.yml down
+
+services:
+  test-unit:
+    build:
+      context: ..
+      dockerfile: Dockerfile.test
+    command: pytest tests/ -v --ignore=tests/test_stress.py
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  sandbox-fusion:
+    build:
+      context: ../sandbox-fusion
+      dockerfile: scripts/Dockerfile.server
+    privileged: true
+    mem_limit: 8g
+    environment:
+      SANDBOX_CONFIG: local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      SANDBOX_FUSION_URL: http://sandbox-fusion:8080
+    depends_on:
+      redis:
+        condition: service_healthy
+      sandbox-fusion:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  test-stress:
+    build:
+      context: ..
+      dockerfile: Dockerfile.test
+    environment:
+      BASE_URL: http://app:8000
+      CONCURRENCY: "5"
+      EXEC_TIMEOUT: "60"
+    command: pytest tests/test_stress.py -v -s
+    depends_on:
+      app:
+        condition: service_healthy

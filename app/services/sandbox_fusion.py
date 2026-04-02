@@ -28,7 +28,6 @@ class SandboxFusionClient:
         stdin: str | None = None,
         files: dict[str, str | None] | None = None,
         fetch_files: list[str] | None = None,
-        image: str | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "code": code,
@@ -41,8 +40,6 @@ class SandboxFusionClient:
         }
         if stdin is not None:
             payload["stdin"] = stdin
-        if image:
-            payload["image"] = image
         async with httpx.AsyncClient(timeout=run_timeout + 30) as client:
             r = await client.post(f"{self.base_url}/run_code", json=payload)
             r.raise_for_status()

@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+COPY app ./app
+COPY tests ./tests
+
+ENV PYTHONPATH=/app
+
+# Default: unit tests only (no live SandboxFusion).
+CMD ["pytest", "tests/", "-v", "--ignore=tests/test_stress.py"]

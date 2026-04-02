@@ -4,6 +4,5 @@ redis
 rq
 httpx
 pydantic-settings
-pyyaml
 pytest
 pytest-asyncio

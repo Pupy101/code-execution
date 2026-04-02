@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 def test_health(client):
@@ -18,7 +18,12 @@ def test_execute_validation(client):
 @patch("app.api.execute.job_set")
 @patch("app.api.execute.asyncio.create_task")
 @patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
-def test_execute_async(mock_run, _mock_task, mock_job_set, client):
+def test_execute_async(mock_run, mock_create_task, mock_job_set, client):
+    def _consume_task(coro):
+        coro.close()
+        return MagicMock()
+
+    mock_create_task.side_effect = _consume_task
     mock_run.return_value = {"status": "Success", "run_result": {"stdout": "1\n", "stderr": "", "return_code": 0}}
     r = client.post(
         "/api/v1/execute/async",

@@ -10,7 +10,7 @@ Response: `200 OK`, body: `{"status": "ok"}`
 
 ## Execute (Sync)
 
-Поддерживаемые языки (`lang`): `python`, `cpp`, `nodejs`, `go`, `go_test`, `java`, `php`, `csharp`, `bash`, `typescript`, `sql`, `rust`, `cuda`, `lua`, `R`, `perl`, `D_ut`, `ruby`, `scala`, `julia`, `pytest`, `junit`, `kotlin_script`, `jest`, `verilog`, `python_gpu`, `lean`, `swift`, `racket`.
+Поддерживаемые языки (`lang`) совпадают с `sandbox.runners.types.Language`: `python`, `cpp`, `nodejs`, `js`, `go`, `go_test`, `java`, `php`, `csharp`, `bash`, `typescript`, `ts`, `sql`, `rust`, `cuda`, `lua`, `R`, `perl`, `D_ut`, `ruby`, `scala`, `julia`, `pytest`, `junit`, `kotlin_script`, `jest`, `verilog`, `python_gpu`, `lean`, `swift`, `racket`. Отдельно в SandboxFusion доступен `POST /run_jupyter` (не через поле `lang`).
 
 ```
 POST /api/v1/execute
@@ -23,7 +23,6 @@ Content-Type: application/json
   "memory": 256,
   "cpu": 1.0,
   "network": false,
-  "env": null,
   "files": {}
 }
 ```
@@ -40,7 +39,7 @@ Response:
 
 Status: `success` | `timeout` | `error` | `memory_limit`
 
-При переполнении очереди: `503`, body: `{"error": "queue_full", "message": "...", "details": {...}}`
+При переполнении параллельных запусков: `503`, body: `{"error": "overloaded", "message": "Too many concurrent executions"}`
 
 ## Execute (Async)
 
@@ -58,27 +57,11 @@ Response: {
 }
 ```
 
-## Environments
-
-```
-POST /api/v1/environments
-Body: {"id": "ml-python", "image": "my-registry/ml-env:v1", "lang": "python", "desc": "..."}
-Response: {"id": "ml-python", "image": "...", "status": "registered"}
-
-GET /api/v1/environments
-Response: {"environments": [{...}]}
-
-PUT /api/v1/environments/{id}
-Body: {"image": "...", "desc": "..."}
-
-DELETE /api/v1/environments/{id}
-```
-
 ## Sessions (Python)
 
 ```
 POST /api/v1/sessions
-Body: {"ttl": 1800, "env": null, "memory": 512, "cpu": 1.0}
+Body: {"ttl": 1800, "memory": 512, "cpu": 1.0}
 Response: {"id": "uuid"}
 
 POST /api/v1/sessions/{id}/execute

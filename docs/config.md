@@ -8,8 +8,7 @@
 | MAX_MEMORY | Макс. память (MB) | 1024 |
 | MAX_CPU | Макс. CPU | 4 |
 | SANDBOX_FUSION_URL | URL SandboxFusion | http://sandbox-fusion:8080 |
-| ENVIRONMENTS_DIR | Директория реестра сред | config/environments |
-| WORKER_COUNT | Кол-во RQ workers | 4 |
+| WORKER_COUNT | Зарезервировано (RQ не используется в текущей реализации) | 4 |
 | MAX_QUEUE_SIZE | Макс. размер очереди | 500 |
 | QUEUE_TIMEOUT | Таймаут ожидания в очереди (сек) | 1800 |
 | TASK_TTL | TTL задачи (сек) | 1800 |

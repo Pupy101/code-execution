@@ -12,7 +12,6 @@ from app.models.schemas import (
     ExecuteRequest,
     ExecuteResponse,
 )
-from app.services.env_registry import get_env_image
 from app.services.queue import job_get, job_set
 from app.services.sandbox_fusion import sandbox_client
 from app.utils.path_validation import validate_paths
@@ -54,7 +53,6 @@ def _parse_sandbox_response(data: dict[str, Any]) -> ExecuteResponse:
 
 async def _call_sandbox(req: ExecuteRequest, timeout: int, memory: int) -> ExecuteResponse:
     """Run code in SandboxFusion, honouring the shared concurrency semaphore."""
-    image = get_env_image(req.env) if req.env else None
     async with _sandbox_sem:
         try:
             data = await sandbox_client.run_code(
@@ -64,7 +62,6 @@ async def _call_sandbox(req: ExecuteRequest, timeout: int, memory: int) -> Execu
                 run_timeout=timeout,
                 memory_limit_MB=memory,
                 files=dict(req.files) or {},
-                image=image,
             )
         except httpx.HTTPStatusError as exc:
             raise HTTPException(status_code=502, detail={"error": "sandbox_error", "message": str(exc)}) from exc
