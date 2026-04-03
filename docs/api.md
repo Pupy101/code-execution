@@ -43,6 +43,7 @@ POST /api/v1/execute
 |---|---|---|---|
 | `code` | string | — | Код для запуска |
 | `lang` | string | — | Язык из `GET /languages` |
+| `stdin` | string | `null` | Входные данные для программы |
 | `timeout` | int | 30 | Макс. время выполнения (сек) |
 | `memory` | int | 256 | Макс. память (МБ) |
 | `cpu` | float | 1.0 | Макс. CPU |

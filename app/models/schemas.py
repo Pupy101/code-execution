@@ -10,6 +10,7 @@ Language = Literal[*LANGUAGE_IDS]  # type: ignore
 class ExecuteRequest(BaseModel):
     code: str
     lang: Language
+    stdin: str | None = None
     timeout: int = Field(30, ge=1)
     memory: int = Field(256, ge=1)
     cpu: float = Field(1.0, ge=0.1)

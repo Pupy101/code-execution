@@ -56,6 +56,7 @@ async def _run(req: ExecuteRequest, timeout: int, memory: int) -> ExecuteRespons
                 compile_timeout=timeout,
                 run_timeout=timeout,
                 memory_limit_MB=memory,
+                stdin=req.stdin,
                 files=dict(req.files) or {},
             )
         except httpx.HTTPStatusError as exc:
@@ -86,7 +87,7 @@ async def _run_job(job_id: str, req: ExecuteRequest, timeout: int, memory: int) 
     try:
         result = await _run(req, timeout, memory)
         job_set(job_id, {"status": "finish", **result.model_dump()})
-    except Exception as exc:
+    except Exception as exc: # pylint: disable=broad-exception-caught
         job_set(job_id, {"status": "error", "stdout": "", "stderr": str(exc), "exit_code": -1})
 
 

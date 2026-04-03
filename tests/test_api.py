@@ -100,3 +100,44 @@ def test_execute_async_status_finish(mock_get, client):
     assert r.status_code == 200
     assert r.json()["status"] == "finish"
     assert r.json()["stdout"] == "hello\n"
+
+
+@patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
+def test_execute_passes_stdin(mock_run, client):
+    mock_run.return_value = {"status": "Success", "run_result": {"stdout": "42\n", "stderr": "", "return_code": 0}}
+    r = client.post(
+        "/api/v1/execute",
+        json={"code": "print(input())", "lang": "python", "stdin": "42"},
+    )
+    assert r.status_code == 200
+    assert r.json()["stdout"] == "42\n"
+    assert mock_run.call_args.kwargs["stdin"] == "42"
+
+
+@patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
+def test_execute_stdin_none_by_default(mock_run, client):
+    mock_run.return_value = {"status": "Success", "run_result": {"stdout": "", "stderr": "", "return_code": 0}}
+    r = client.post(
+        "/api/v1/execute",
+        json={"code": "print('hi')", "lang": "python"},
+    )
+    assert r.status_code == 200
+    assert mock_run.call_args.kwargs["stdin"] is None
+
+
+@patch("app.api.execute.job_set")
+@patch("app.api.execute.asyncio.create_task")
+@patch("app.api.execute.sandbox_client.run_code", new_callable=AsyncMock)
+def test_execute_async_passes_stdin(mock_run, mock_create_task, mock_job_set, client):
+    def _consume_task(coro):
+        coro.close()
+        return MagicMock()
+
+    mock_create_task.side_effect = _consume_task
+    mock_run.return_value = {"status": "Success", "run_result": {"stdout": "7\n", "stderr": "", "return_code": 0}}
+    r = client.post(
+        "/api/v1/execute/async",
+        json={"code": "print(input())", "lang": "python", "stdin": "7"},
+    )
+    assert r.status_code == 200
+    assert r.json()["id"]
