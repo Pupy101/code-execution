@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.models.languages import LANGUAGE_IDS
 
-Language = Literal[*LANGUAGE_IDS]  # type: ignore
+Language = Literal[*LANGUAGE_IDS]
 
 
 class ExecuteRequest(BaseModel):
@@ -13,8 +13,6 @@ class ExecuteRequest(BaseModel):
     stdin: str | None = None
     timeout: int = Field(30, ge=1)
     memory: int = Field(256, ge=1)
-    cpu: float = Field(1.0, ge=0.1)
-    network: bool = False
     files: dict[str, str] = Field(default_factory=dict)
 
 
@@ -55,8 +53,7 @@ class LanguagesResponse(BaseModel):
 
 class SessionCreate(BaseModel):
     ttl: int = 1800
-    memory: int = 512
-    cpu: float = 1.0
+    memory: int = -1
 
 
 class SessionExecute(BaseModel):

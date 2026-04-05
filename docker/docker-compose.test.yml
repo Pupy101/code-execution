@@ -1,15 +1,3 @@
-# Тесты в Docker.
-#
-# Только unit (моки, без SandboxFusion):
-#   docker compose -f docker/docker-compose.test.yml run --rm test-unit
-#
-# Стек + стресс-тесты к живому API:
-#   docker compose -f docker/docker-compose.test.yml up -d sandbox-fusion app
-#   docker compose -f docker/docker-compose.test.yml run --rm test-stress
-#
-# Остановка стека:
-#   docker compose -f docker/docker-compose.test.yml down
-
 services:
   test-unit:
     build:

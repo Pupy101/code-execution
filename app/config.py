@@ -6,7 +6,6 @@ class Settings(BaseSettings):
 
     MAX_TIMEOUT: int = 300
     MAX_MEMORY: int = 4096
-    MAX_CPU: float = 4.0
     MAX_QUEUE_SIZE: int = 500
     TASK_TTL: int = 1800
 

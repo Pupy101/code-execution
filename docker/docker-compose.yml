@@ -26,7 +26,6 @@ services:
       - "9090:8080"
     mem_limit: 8g
     environment:
-      # isolation=none: избегает ограничений pthread, которые ломают nodejs/julia/ruby
       SANDBOX_CONFIG: local
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

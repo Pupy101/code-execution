@@ -17,7 +17,7 @@ def _session_error(exc: httpx.HTTPStatusError) -> HTTPException:
 @router.post("/sessions")
 async def session_create(req: SessionCreate):
     try:
-        return await sandbox_client.create_session(req.ttl, req.memory, req.cpu)
+        return await sandbox_client.create_session(req.ttl, req.memory)
     except httpx.HTTPStatusError as exc:
         raise _session_error(exc) from exc
 

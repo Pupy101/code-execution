@@ -1,6 +1,6 @@
 # Code Executor
 
-HTTP-сервис для запуска LLM-кода. Делегирует выполнение [SandboxFusion](sandbox-fusion/) (git submodule), хранит статусы async-задач в Redis.
+HTTP-сервис для запуска LLM-кода. Делегирует выполнение [SandboxFusion](sandbox-fusion/) (git submodule), хранит статусы async-задач в памяти.
 
 ## Быстрый старт
 
@@ -20,7 +20,7 @@ docker compose -f docker/docker-compose.test.yml run --rm test-unit
 
 **Стресс-тесты** (поднимает весь стек; первый билд долгий из-за Lean и других рантаймов):
 ```bash
-docker compose -f docker/docker-compose.test.yml up -d redis sandbox-fusion app
+docker compose -f docker/docker-compose.test.yml up -d sandbox-fusion app
 docker compose -f docker/docker-compose.test.yml run --rm test-stress
 ```
 
@@ -38,15 +38,15 @@ docker compose -f docker/docker-compose.test.yml run --rm \
 ```
 app/
 ├── api/
-│   ├── execute.py        # /execute, /execute/async
-│   ├── sessions.py       # /sessions
-│   └── system.py         # /health, /languages
+│   ├── execute.py
+│   ├── sessions.py
+│   └── system.py
 ├── models/
-│   ├── languages.py      # список языков, маппинг → sandbox id
-│   └── schemas.py        # Pydantic-схемы
+│   ├── languages.py
+│   └── schemas.py
 ├── services/
-│   ├── sandbox_fusion.py # HTTP-клиент к SandboxFusion
-│   └── queue.py          # Redis (статусы async-задач)
+│   ├── sandbox_fusion.py
+│   └── queue.py
 ├── utils/
 │   └── path_validation.py
 ├── config.py

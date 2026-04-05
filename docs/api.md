@@ -46,8 +46,6 @@ POST /api/v1/execute
 | `stdin` | string | `null` | Входные данные для программы |
 | `timeout` | int | 30 | Макс. время выполнения (сек) |
 | `memory` | int | 256 | Макс. память (МБ) |
-| `cpu` | float | 1.0 | Макс. CPU |
-| `network` | bool | false | Доступ к сети (не передаётся в sandbox) |
 | `files` | object | `{}` | Файлы `{"path": "содержимое"}` |
 
 **Ответ:**
@@ -105,7 +103,7 @@ Stateful-сессия с сохранением состояния между в
 
 ```
 POST /api/v1/sessions
-Body: {"ttl": 1800, "memory": 512, "cpu": 1.0}
+Body: {"ttl": 1800, "memory": -1}
 ```
 
 **Выполнить код:**

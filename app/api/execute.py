@@ -87,7 +87,7 @@ async def _run_job(job_id: str, req: ExecuteRequest, timeout: int, memory: int) 
     try:
         result = await _run(req, timeout, memory)
         job_set(job_id, {"status": "finish", **result.model_dump()})
-    except Exception as exc: # pylint: disable=broad-exception-caught
+    except Exception as exc:
         job_set(job_id, {"status": "error", "stdout": "", "stderr": str(exc), "exit_code": -1})
 
 

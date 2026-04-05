@@ -46,14 +46,15 @@ class SandboxFusionClient:
             result: dict[str, Any] = r.json()
             return result
 
-    async def create_session(self, ttl: int, memory: int, cpu: float) -> dict[str, Any]:
+    async def create_session(self, ttl: int, memory: int) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(
                 f"{self.base_url}/sessions",
-                json={"ttl": ttl, "memory": memory, "cpu": cpu},
+                json={"ttl": ttl, "memory": memory},
             )
             r.raise_for_status()
-            return r.json()  # type: ignore
+            result: dict[str, Any] = r.json()
+            return result
 
     async def run_in_session(self, session_id: str, code: str) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -62,7 +63,8 @@ class SandboxFusionClient:
                 json={"code": code},
             )
             r.raise_for_status()
-            return r.json()  # type: ignore
+            result: dict[str, Any] = r.json()
+            return result
 
     async def upload_session_files(self, session_id: str, files: dict[str, str]) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -71,19 +73,22 @@ class SandboxFusionClient:
                 json={"files": files},
             )
             r.raise_for_status()
-            return r.json()  # type: ignore
+            result: dict[str, Any] = r.json()
+            return result
 
     async def list_session_files(self, session_id: str) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"{self.base_url}/sessions/{session_id}/files")
             r.raise_for_status()
-            return r.json()  # type: ignore
+            result: dict[str, Any] = r.json()
+            return result
 
     async def close_session(self, session_id: str) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(f"{self.base_url}/sessions/{session_id}/finish")
             r.raise_for_status()
-            return r.json()  # type: ignore
+            result: dict[str, Any] = r.json()
+            return result
 
 
 sandbox_client = SandboxFusionClient()

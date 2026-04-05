@@ -10,5 +10,4 @@ COPY tests ./tests
 
 ENV PYTHONPATH=/app
 
-# Default: unit tests only (no live SandboxFusion).
 CMD ["pytest", "tests/", "-v", "--ignore=tests/test_stress.py"]
