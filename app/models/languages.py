@@ -11,7 +11,6 @@ LANGUAGE_IDS: Final[tuple[str, ...]] = (
     "go",
     "java",
     "javascript",
-    "js",
     "julia",
     "kotlin",
     "lean",
@@ -26,7 +25,6 @@ LANGUAGE_IDS: Final[tuple[str, ...]] = (
     "sql",
     "swift",
     "racket",
-    "ts",
     "typescript",
     "verilog",
 )
@@ -84,11 +82,6 @@ _META: Final[dict[str, dict[str, str]]] = {
             "node_modules layer (jest, puppeteer, @babel/*, lodash, jsdom, etc. per the image package.json)."
         ),
     },
-    "js": {
-        "id": "js",
-        "title": "JavaScript (js)",
-        "description": "Same stack as javascript: Node.js 20.11.0 and the bundled Node dependency tree.",
-    },
     "go": {
         "id": "go",
         "title": "Go",
@@ -118,11 +111,6 @@ _META: Final[dict[str, dict[str, str]]] = {
         "id": "typescript",
         "title": "TypeScript",
         "description": "Runs via global tsx 4.7.1 on Node 20.11.0; same symlinked node_modules layer as JavaScript.",
-    },
-    "ts": {
-        "id": "ts",
-        "title": "TypeScript (ts)",
-        "description": "Same stack as typescript: tsx, Node 20.11.0, bundled Node dependencies.",
     },
     "sql": {
         "id": "sql",
