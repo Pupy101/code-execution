@@ -24,7 +24,7 @@ services:
     privileged: true
     ports:
       - "9090:8080"
-    mem_limit: 8g
+    mem_limit: 16g
     environment:
       SANDBOX_CONFIG: local
     healthcheck:

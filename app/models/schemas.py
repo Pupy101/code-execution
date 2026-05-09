@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.models.languages import LANGUAGE_IDS
 
-Language = Literal[*LANGUAGE_IDS]
+Language = Literal[*LANGUAGE_IDS] # type: ignore
 
 
 class ExecuteRequest(BaseModel):
